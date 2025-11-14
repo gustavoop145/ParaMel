@@ -1,0 +1,45 @@
+import { API_URL } from './config';
+import React, { useState } from 'react';
+import { API_URL, authHeader } from './services/api';
+
+export default function VagaForm({ onSaved }){
+  const [titulo,setTitulo]=useState('');
+  const [descricao,setDescricao]=useState('');
+
+  async function handleSubmit(e){
+    e.preventDefault();
+    try{
+      const res = await fetch(`${API_URL}/api/vagas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify({
+          titulo,
+          descricao,
+          area: 'Desenvolvimento',
+          localizacao: 'Remoto',
+          modalidade: 'REMOTO',
+          cargaHoraria: '20h',
+          requisitos: 'React, HTML, CSS'
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({message:'Erro'}));
+        throw new Error(err.message || 'Erro ao criar vaga');
+      }
+      const vaga = await res.json();
+      alert('Vaga criada!');
+      if (onSaved) onSaved(vaga);
+    } catch(err){
+      console.error(err);
+      alert('Erro: ' + err.message);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input value={titulo} onChange={e=>setTitulo(e.target.value)} placeholder="Título" required />
+      <textarea value={descricao} onChange={e=>setDescricao(e.target.value)} placeholder="Descrição" />
+      <button type="submit">Criar vaga</button>
+    </form>
+  );
+}

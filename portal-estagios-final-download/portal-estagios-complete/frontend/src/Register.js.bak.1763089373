@@ -1,0 +1,86 @@
+import { API_URL } from './config';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+export default function Register() {
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [perfil, setPerfil] = useState('ALUNO');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+
+    const payload = { nome, email, senha, perfil };
+
+    try {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        try {
+          const errJson = text ? JSON.parse(text) : { message: res.statusText || 'Erro' };
+          throw errJson;
+        } catch {
+          throw { message: text || res.statusText || 'Erro desconhecido' };
+        }
+      }
+
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+
+      const token = data.token || (data.usuario && data.token) || (data.accessToken) || null;
+      if (token) {
+        const bare = token.startsWith('Bearer ') ? token.slice(7) : token;
+        localStorage.setItem('token', bare);
+      }
+
+      navigate('/');
+    } catch (err) {
+      const message = err && (err.message || err.error || JSON.stringify(err)) || 'Erro desconhecido';
+      alert('Erro ao registrar: ' + message);
+      console.error('Register error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={{ padding: 20 }}>
+      <h2>Registrar</h2>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Nome</label><br/>
+          <input value={nome} onChange={e => setNome(e.target.value)} required />
+        </div>
+        <div>
+          <label>Email</label><br/>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+        </div>
+        <div>
+          <label>Senha</label><br/>
+          <input type="password" value={senha} onChange={e => setSenha(e.target.value)} required />
+        </div>
+        <div>
+          <label>Perfil</label><br/>
+          <select value={perfil} onChange={e => setPerfil(e.target.value)}>
+            <option value="ALUNO">ALUNO</option>
+            <option value="EMPRESA">EMPRESA</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          <button type="submit" disabled={loading}>{loading ? 'Enviando...' : 'Registrar'}</button>
+        </div>
+      </form>
+    </div>
+  );
+}

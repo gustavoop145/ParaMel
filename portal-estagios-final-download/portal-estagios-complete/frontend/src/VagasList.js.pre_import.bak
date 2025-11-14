@@ -1,0 +1,33 @@
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { getToken, authFetch, getPerfil } from './auth';
+
+export default function VagasList(){
+  const [vagas,setVagas]=useState([]);
+
+  const load = async ()=>{
+    const res = await fetch(`${API_URL}/api/vagas`);
+    const data = await res.json();
+    setVagas(data);
+  }
+
+  useEffect(()=>{ load(); },[]);
+
+  const logout = ()=>{ localStorage.removeItem('token'); window.location.reload(); };
+  const perfil = getPerfil();
+
+  return (
+    <div style={{padding:20}}>
+      <h2>Vagas</h2>
+      { (()=>{ const perfil = getPerfil(); return (<div>{perfil==='EMPRESA' || perfil==='ADMIN' ? <Link to='/vaga/novo'>Criar vaga</Link> : null} | <Link to='/login'>Login</Link> | <Link to='/register'>Registrar</Link></div>); })() }
+      <ul>
+        {vagas.map(v=>(
+          <li key={v.id}><strong>{v.titulo}</strong> - {v.area} - {v.localizacao} {v.encerrada? '(ENCERRADA)':''}
+            <div><Link to={'/vaga/'+v.id}>Ver / Editar</Link></div>
+          </li>
+        ))}
+      </ul>
+      <button onClick={logout}>Logout</button>
+    </div>
+  );
+}

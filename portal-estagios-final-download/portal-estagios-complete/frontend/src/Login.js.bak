@@ -1,0 +1,41 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { API_BASE } from './services/api';
+
+export default function Login(){
+  const [email,setEmail]=useState('');
+  const [senha,setSenha]=useState('');
+  const [loading,setLoading]=useState(false);
+  const navigate = useNavigate();
+
+  async function handleSubmit(e){
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Erro no login');
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('usuario', JSON.stringify(data.usuario));
+      navigate('/');
+    } catch(err){
+      console.error(err);
+      alert('Erro: ' + (err.message || err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h2>Login</h2>
+      <input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} required />
+      <input placeholder="Senha" type="password" value={senha} onChange={e=>setSenha(e.target.value)} required />
+      <button type="submit" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button>
+    </form>
+  );
+}
